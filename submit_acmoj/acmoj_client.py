@@ -83,10 +83,30 @@ class ACMOJClient:
         except Exception as e:
             print(f"⚠️ Warning: Failed to save submission ID: {e}")
 
-    def submit_git(self, problem_id: int, git_url: str) -> Optional[Dict]:
-        data = {"language": "git", "code": git_url}
+    def submit_git(self, problem_id: int, git_url: str) -> Optional[Dict]:      
+
+        data = {"language": "git", "code": git_url}                             
+
+        result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)                                                                         
+
+        if result and 'id' in result:                                           
+
+            self._save_submission_id(result['id'])                              
+
+                                                                                    
+
+        return result                                                           
+
+    
+
+    def submit_code(self, problem_id: int, language: str, code: str) -> Optional[Dict]:
+
+        data = {"language": language, "code": code}
+
         result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)
+
         if result and 'id' in result:
+
             self._save_submission_id(result['id'])
 
         return result
@@ -140,7 +160,10 @@ def main():
             print(f"Error: Failed to read code file: {e}")
             exit(1)
 
-        result = client.submit_code(args.problem_id, args.language, code_text)
+        if args.language == "git":
+            result = client.submit_git(args.problem_id, code_text.strip())
+        else:
+            result = client.submit_code(args.problem_id, args.language, code_text)
 
     elif args.command == "status":
         result = client.get_submission_detail(args.submission_id)
